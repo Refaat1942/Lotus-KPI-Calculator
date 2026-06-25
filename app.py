@@ -110,9 +110,10 @@ def _clear_session_files(sid):
 
 def get_engine():
     sid = session.get("sid")
-    if not sid or sid not in _engines:
+    if not sid:
         sid = os.urandom(16).hex()
         session["sid"] = sid
+    if sid not in _engines:
         _engines[sid] = KPIEngine(
             app.config["DB_PATH"],
             app.config["LOGIC_FILE"],
@@ -121,7 +122,20 @@ def get_engine():
         )
     eng = _engines[sid]
     _restore_engine(eng)
+    _reload_main_from_upload(eng)
     return eng
+
+
+def _reload_main_from_upload(eng):
+    """Fallback: re-read the original uploaded file if pickle restore missed."""
+    if eng.raw_df is not None:
+        return
+    path = session.get("main_file_path")
+    if path and os.path.exists(path):
+        try:
+            eng.raw_df = eng.read_file(path)
+        except Exception:
+            pass
 
 
 def login_required(f):
@@ -135,7 +149,11 @@ def login_required(f):
 
 def save_upload(file):
     filename = secure_filename(file.filename)
+    if not filename:
+        ext = os.path.splitext(file.filename or "")[1].lower() or ".xlsx"
+        filename = f"upload_{os.urandom(8).hex()}{ext}"
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     file.save(path)
     return path
 
@@ -183,6 +201,7 @@ def upload():
             if f.filename:
                 path = save_upload(f)
                 eng.raw_df = eng.read_file(path)
+                session["main_file_path"] = path
                 date_from, date_to = eng.guess_date_range()
                 session["date_from"] = date_from
                 session["date_to"] = date_to
@@ -207,6 +226,17 @@ def upload():
 
         elif action == "calculate":
             _restore_engine(eng)
+            _reload_main_from_upload(eng)
+            if eng.raw_df is None:
+                flash("Load data first.", "error")
+                return render_template(
+                    "upload.html",
+                    date_from=session.get("date_from", date_from),
+                    date_to=session.get("date_to", date_to),
+                    has_main=bool(session.get("has_main") or session.get("main_file_path")),
+                    has_eval=eng.eval_df is not None or session.get("has_eval"),
+                    has_push=eng.push_df is not None or session.get("has_push"),
+                )
             date_from = request.form.get("date_from", date_from)
             date_to = request.form.get("date_to", date_to)
             session["date_from"] = date_from
