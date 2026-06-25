@@ -23,7 +23,7 @@
         {% for row in rows %}
         <tr class="row-animate">
           {% for cell in row %}
-          <td>{{ cell }}</td>
+          <td {% if loop.index0 < 5 %}dir="auto" class="arabic-text"{% endif %}>{{ cell }}</td>
           {% endfor %}
         </tr>
         {% endfor %}

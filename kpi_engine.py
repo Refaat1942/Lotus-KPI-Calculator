@@ -71,6 +71,7 @@ SETTINGS_CATEGORIES = [
 
 
 def fix_arabic(text):
+    """Bidi fix for Tkinter/desktop (LTR widgets)."""
     if not ARABIC_LIB or pd.isna(text):
         return str(text)
     try:
@@ -78,6 +79,26 @@ def fix_arabic(text):
         return get_display(reshaped_text)
     except Exception:
         return str(text)
+
+
+def fix_arabic_web(text):
+    """Reshape Arabic letters only — browsers handle direction via dir=auto."""
+    if pd.isna(text):
+        return str(text)
+    s = str(text)
+    if not ARABIC_LIB:
+        return s
+    try:
+        if any("\u0600" <= c <= "\u06FF" or "\u0750" <= c <= "\u077F" for c in s):
+            return arabic_reshaper.reshape(s)
+        return s
+    except Exception:
+        return s
+
+
+def _is_arabic_text(text):
+    s = str(text)
+    return any("\u0600" <= c <= "\u06FF" for c in s)
 
 
 def find_col(df, possible_names):
@@ -487,11 +508,11 @@ class KPIEngine:
 
     def get_branches(self):
         branches = sorted({r[3] for r in self.all_results})
-        return ["All Branches"] + [fix_arabic(b) for b in branches]
+        return ["All Branches"] + list(branches)
 
     def get_jobs(self):
         jobs = sorted({r[2] for r in self.all_results})
-        return ["All Jobs"] + [fix_arabic(j) for j in jobs]
+        return ["All Jobs"] + list(jobs)
 
     def filter_results(self, q="", branch="All Branches", job="All Jobs", shift="All Shifts", include_unknown=True):
         q = q.lower()
@@ -500,10 +521,13 @@ class KPIEngine:
             if not include_unknown and r[2] == "Unknown":
                 continue
             if (q in str(r[0]).lower() or q in str(r[1]).lower()) and \
-               (branch == fix_arabic("All Branches") or branch == fix_arabic(str(r[3]))) and \
-               (job == fix_arabic("All Jobs") or job == fix_arabic(str(r[2]))) and \
-               (shift == "All Shifts" or shift == fix_arabic(str(r[4]))):
-                rows.append([fix_arabic(c) if i in (0, 2, 3, 4) else c for i, c in enumerate(r)])
+               (branch == "All Branches" or branch == str(r[3])) and \
+               (job == "All Jobs" or job == str(r[2])) and \
+               (shift == "All Shifts" or shift == str(r[4])):
+                rows.append([
+                    fix_arabic_web(c) if i in (0, 2, 3, 4) and _is_arabic_text(c) else c
+                    for i, c in enumerate(r)
+                ])
         return rows
 
     def delete_unknown_employee(self, emp_code):
@@ -516,9 +540,14 @@ class KPIEngine:
         for r in self.all_results:
             name, code, j, b = str(r[0]).lower(), str(r[1]).lower(), str(r[2]), str(r[3])
             if (q in name or q in code) and \
-               (branch == fix_arabic("All Branches") or branch == fix_arabic(b)) and \
-               (job == fix_arabic("All Jobs") or job == fix_arabic(j)):
-                suggestions.append({"name": fix_arabic(r[0]), "code": r[1], "job": fix_arabic(r[2]), "branch": fix_arabic(r[3])})
+               (branch == "All Branches" or branch == b) and \
+               (job == "All Jobs" or job == j):
+                suggestions.append({
+                    "name": fix_arabic_web(r[0]) if _is_arabic_text(r[0]) else r[0],
+                    "code": r[1],
+                    "job": fix_arabic_web(r[2]) if _is_arabic_text(r[2]) else r[2],
+                    "branch": fix_arabic_web(r[3]) if _is_arabic_text(r[3]) else r[3],
+                })
         return suggestions
 
     def get_employee_detail(self, emp_name):
@@ -639,7 +668,10 @@ class KPIEngine:
                         fmt_r[i] = f"{float(fmt_r[i]):.0f}"
                     except Exception:
                         pass
-            formatted.append([fix_arabic(c) if isinstance(c, str) and i < 5 else c for i, c in enumerate(fmt_r)])
+            formatted.append([
+                fix_arabic_web(c) if isinstance(c, str) and i < 5 and _is_arabic_text(c) else c
+                for i, c in enumerate(fmt_r)
+            ])
         return cols, formatted
 
     def parse_logic_from_form(self, form_data):
@@ -760,7 +792,10 @@ class KPIEngine:
 
                 growth_pct = ((p2_tot - p1_tot) / p1_tot * 100) if p1_tot > 0 else (100 if p2_tot > 0 else 0)
                 row = [
-                    fix_arabic(name), code, fix_arabic(branch), fix_arabic(job),
+                    fix_arabic_web(name) if _is_arabic_text(name) else name,
+                    code,
+                    fix_arabic_web(branch) if _is_arabic_text(branch) else branch,
+                    fix_arabic_web(job) if _is_arabic_text(job) else job,
                     f"{p1_tot:.0f}", f"{p2_tot:.0f}",
                     f"{growth_pct:+.1f}%".replace('.0%', '%'),
                     f"{p2_reg - p1_reg:+.0f}", f"{p2_del - p1_del:+.0f}",
@@ -778,8 +813,8 @@ class KPIEngine:
         for r in self.comp_results_data:
             name, code = str(r[0]).lower(), str(r[1]).lower()
             if (q in name or q in code) and \
-               (branch == fix_arabic("All Branches") or branch == r[2]) and \
-               (job == fix_arabic("All Jobs") or job == r[3]):
+               (branch == "All Branches" or branch == r[2]) and \
+               (job == "All Jobs" or job == r[3]):
                 rows.append(r)
         return rows
 

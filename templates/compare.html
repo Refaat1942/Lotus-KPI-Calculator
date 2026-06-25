@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros/date_picker.html" import date_picker %}
 {% block title %}Compare Periods — Lotus KPI{% endblock %}
 {% block content %}
 <h1 class="page-title">Compare Periods</h1>
@@ -15,12 +16,13 @@
       {% if has_p2 %}<span class="status-badge success">P2 loaded ✓</span>{% endif %}
     </form>
 
-    <form method="post" class="date-frame inline">
+    <form method="post" class="date-frame inline dmy-form" id="compare-form">
       <input type="hidden" name="action" value="run_compare">
       <span class="label-bold">Period 2 Dates:</span>
-      <input type="date" name="p2_from" value="{{ p2_from }}" required>
-      <span>To:</span>
-      <input type="date" name="p2_to" value="{{ p2_to }}" required>
+      <div class="dmy-row inline-dmy">
+        {{ date_picker("From", "p2_from", p2_from) }}
+        {{ date_picker("To", "p2_to", p2_to) }}
+      </div>
       <button type="submit" class="btn btn-orange">⚡ Run Comparison</button>
     </form>
 
@@ -34,7 +36,7 @@
     <input type="text" name="q" value="{{ filters.q }}" placeholder="Name or code..." class="input-sm">
     <select name="branch" onchange="this.form.submit()">
       {% for b in branches %}
-      <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %}>{{ b }}</option>
+      <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %} dir="auto">{{ b }}</option>
       {% endfor %}
     </select>
     <select name="job" onchange="this.form.submit()">
@@ -60,7 +62,8 @@
         {% for row in rows %}
         <tr class="row-animate">
           {% for cell in row %}
-          <td class="{% if loop.index == 7 and cell.startswith('+') %}positive{% elif loop.index == 7 and cell.startswith('-') %}negative{% endif %}">{{ cell }}</td>
+          <td class="{% if loop.index0 in [0, 2, 3] %}arabic-text{% endif %}{% if loop.index == 7 and cell.startswith('+') %} positive{% elif loop.index == 7 and cell.startswith('-') %} negative{% endif %}"
+              {% if loop.index0 in [0, 2, 3] %}dir="auto"{% endif %}>{{ cell }}</td>
           {% endfor %}
         </tr>
         {% else %}
@@ -71,4 +74,11 @@
   </div>
   {% endif %}
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('compare-form')?.addEventListener('submit', () => {
+  if (typeof syncDmyFields === 'function') syncDmyFields(document.getElementById('compare-form'));
+});
+</script>
 {% endblock %}

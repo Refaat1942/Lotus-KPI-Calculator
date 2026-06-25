@@ -24,7 +24,7 @@
     <div class="suggest-list">
       {% for s in suggestions %}
       <a href="{{ url_for('detailed', code=s.code, q=filters.q, branch=filters.branch, job=filters.job) }}"
-         class="suggest-item {% if filters.code == s.code %}active{% endif %}">
+         class="suggest-item {% if filters.code == s.code %}active{% endif %}" dir="auto">
         {{ s.name }} ({{ s.code }})
       </a>
       {% else %}
@@ -35,7 +35,7 @@
 
   <div class="card detail-panel animate-fade delay-2">
     {% if selected %}
-    <h2 class="emp-header">👤 {{ selected.name }} | {{ selected.job }} | {{ selected.branch }}</h2>
+    <h2 class="emp-header" dir="auto">👤 {{ selected.name }} | {{ selected.job }} | {{ selected.branch }}</h2>
     <div class="table-wrap">
       <table class="data-table">
         <thead>

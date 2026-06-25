@@ -9,7 +9,7 @@
     <input type="text" name="q" value="{{ filters.q }}" placeholder="Name or code..." class="input-sm">
     <select name="branch" onchange="this.form.submit()">
       {% for b in branches %}
-      <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %}>{{ b }}</option>
+      <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %} dir="auto">{{ b }}</option>
       {% endfor %}
     </select>
     <select name="job" onchange="this.form.submit()">
@@ -44,7 +44,7 @@
         {% for row in rows %}
         <tr class="row-animate">
           {% for cell in row %}
-          <td>{{ cell }}</td>
+          <td {% if loop.index0 in [0, 2, 3, 4] %}dir="auto" class="arabic-text"{% endif %}>{{ cell }}</td>
           {% endfor %}
           <td>
             {% if row[2] == 'Unknown' %}

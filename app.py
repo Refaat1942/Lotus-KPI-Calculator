@@ -15,6 +15,22 @@ from kpi_engine import KPIEngine, RESULT_COLUMNS, COMPARE_COLUMNS, SETTINGS_CATE
 app = Flask(__name__)
 app.config.from_object(Config)
 
+
+def parse_iso_date_from_form(form, prefix):
+    """Build YYYY-MM-DD from day/month/year select fields."""
+    day = form.get(f"{prefix}_day", "").strip()
+    month = form.get(f"{prefix}_month", "").strip()
+    year = form.get(f"{prefix}_year", "").strip()
+    if day and month and year:
+        return f"{year}-{int(month):02d}-{int(day):02d}"
+    return form.get(prefix, "").strip()
+
+
+@app.template_filter("is_arabic")
+def is_arabic_filter(text):
+    from kpi_engine import _is_arabic_text
+    return _is_arabic_text(text)
+
 _engines = {}
 
 _DF_KEYS = {
@@ -237,8 +253,8 @@ def upload():
                     has_eval=eng.eval_df is not None or session.get("has_eval"),
                     has_push=eng.push_df is not None or session.get("has_push"),
                 )
-            date_from = request.form.get("date_from", date_from)
-            date_to = request.form.get("date_to", date_to)
+            date_from = parse_iso_date_from_form(request.form, "date_from")
+            date_to = parse_iso_date_from_form(request.form, "date_to")
             session["date_from"] = date_from
             session["date_to"] = date_to
             result = eng.process_data(
@@ -487,8 +503,8 @@ def compare():
                 flash("Period 2 data loaded!", "success")
         elif action == "run_compare":
             _restore_engine(eng)
-            p2_from = request.form.get("p2_from", p2_from)
-            p2_to = request.form.get("p2_to", p2_to)
+            p2_from = parse_iso_date_from_form(request.form, "p2_from")
+            p2_to = parse_iso_date_from_form(request.form, "p2_to")
             session["p2_from"] = p2_from
             session["p2_to"] = p2_to
             result = eng.process_comparison(p2_from, p2_to)

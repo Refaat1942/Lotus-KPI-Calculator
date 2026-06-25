@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros/date_picker.html" import date_picker %}
 {% block title %}Upload & Filter — Lotus KPI{% endblock %}
 {% block content %}
 <h1 class="page-title">Upload Data & Select Date Range</h1>
@@ -45,18 +46,16 @@
     {% if has_push %}<span class="status-badge success">Push ✓</span>{% endif %}
   </div>
 
-  <form method="post" id="calc-form" class="calc-form">
+  <form method="post" id="calc-form" class="calc-form dmy-form">
     <input type="hidden" name="action" value="calculate">
     <input type="hidden" name="enable_eval" id="enable_eval_hidden" value="">
     <input type="hidden" name="enable_push" id="enable_push_hidden" value="">
 
     <div class="date-frame card-inner">
       <h3>Filter by Date Range</h3>
-      <div class="date-row">
-        <label>From:</label>
-        <input type="date" name="date_from" value="{{ date_from }}" required>
-        <label>To:</label>
-        <input type="date" name="date_to" value="{{ date_to }}" required>
+      <div class="dmy-row">
+        {{ date_picker("From", "date_from", date_from) }}
+        {{ date_picker("To", "date_to", date_to) }}
       </div>
     </div>
 
@@ -81,6 +80,7 @@ document.getElementById('calc-form').addEventListener('submit', () => {
     document.getElementById('enable_eval').checked ? 'on' : '';
   document.getElementById('enable_push_hidden').value =
     document.getElementById('enable_push').checked ? 'on' : '';
+  if (typeof syncDmyFields === 'function') syncDmyFields(document.getElementById('calc-form'));
 });
 </script>
 {% endblock %}
