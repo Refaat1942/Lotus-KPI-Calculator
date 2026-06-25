@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Detailed Score — Lotus KPI{% endblock %}
+{% block content %}
+<h1 class="page-title">Detailed Score</h1>
+
+<div class="detailed-layout">
+  <div class="card sidebar animate-fade delay-1">
+    <h3 class="section-title">🔍 Search & Filter</h3>
+    <form method="get" class="filter-stack">
+      <input type="text" name="q" value="{{ filters.q }}" placeholder="Name or Code..." class="input-full">
+      <select name="branch" class="input-full">
+        {% for b in branches %}
+        <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+      <select name="job" class="input-full">
+        {% for j in jobs %}
+        <option value="{{ j }}" {% if filters.job == j %}selected{% endif %}>{{ j }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-green btn-block">Search</button>
+    </form>
+
+    <div class="suggest-list">
+      {% for s in suggestions %}
+      <a href="{{ url_for('detailed', code=s.code, q=filters.q, branch=filters.branch, job=filters.job) }}"
+         class="suggest-item {% if filters.code == s.code %}active{% endif %}">
+        {{ s.name }} ({{ s.code }})
+      </a>
+      {% else %}
+      <p class="empty-hint">{% if has_data %}No employees match filters{% else %}Calculate KPI first{% endif %}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card detail-panel animate-fade delay-2">
+    {% if selected %}
+    <h2 class="emp-header">👤 {{ selected.name }} | {{ selected.job }} | {{ selected.branch }}</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Metric</th>
+            <th>Avg/Month</th>
+            <th>Avg/Day</th>
+            <th>Reward</th>
+            <th>Excluded</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in detail_rows %}
+          {% if row.type == 'separator' %}
+          <tr class="row-separator"><td colspan="6">─────────</td></tr>
+          {% elif row.type == 'reward' %}
+          <tr class="row-reward"><td>{{ row.category }}</td><td>{{ row.metric }}</td><td></td><td></td><td><strong>{{ row.reward }}</strong></td><td></td></tr>
+          {% elif row.type == 'summary' %}
+          <tr class="row-summary"><td>{{ row.category }}</td><td>{{ row.metric }}</td><td>{{ row.avg_month }}</td><td>{{ row.avg_day }}</td><td></td><td></td></tr>
+          {% elif row.type == 'excluded' %}
+          <tr class="row-excluded"><td>{{ row.category }}</td><td>{{ row.metric }}</td><td>{{ row.avg_month }}</td><td></td><td></td><td></td></tr>
+          {% else %}
+          <tr class="row-animate"><td>{{ row.category }}</td><td>{{ row.metric }}</td><td>{{ row.avg_month }}</td><td>{{ row.avg_day }}</td><td>{{ row.reward }}</td><td>{{ row.excluded }}</td></tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-state">👤 Select an employee from the list</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

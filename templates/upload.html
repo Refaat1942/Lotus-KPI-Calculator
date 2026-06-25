@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Upload & Filter — Lotus KPI{% endblock %}
+{% block content %}
+<h1 class="page-title">Upload Data & Select Date Range</h1>
+
+<div class="card animate-fade delay-1">
+  <form method="post" enctype="multipart/form-data" class="upload-form">
+    <input type="hidden" name="action" value="load_main">
+    <label class="file-label btn btn-green">
+      📥 Load Main Excel/CSV
+      <input type="file" name="main_file" accept=".xlsx,.xls,.csv" onchange="this.form.submit()">
+    </label>
+    {% if has_main %}<span class="status-badge success">✅ Main data loaded</span>{% endif %}
+  </form>
+
+  <div class="switches">
+    <label class="switch-label">
+      <input type="checkbox" id="enable_eval" onchange="toggleExtras()">
+      Enable Evaluation
+    </label>
+    <label class="switch-label">
+      <input type="checkbox" id="enable_push" onchange="toggleExtras()">
+      Enable Push List
+    </label>
+  </div>
+
+  <div id="extras-frame" class="extras-frame hidden">
+    <form method="post" enctype="multipart/form-data" class="inline-form">
+      <input type="hidden" name="action" value="load_eval">
+      <label class="file-label btn btn-sm btn-outline">
+        📁 Load Eval Sheet
+        <input type="file" name="eval_file" accept=".xlsx,.xls,.csv" onchange="this.form.submit()">
+      </label>
+    </form>
+    <form method="post" enctype="multipart/form-data" class="inline-form">
+      <input type="hidden" name="action" value="load_push">
+      <label class="file-label btn btn-sm btn-outline">
+        📁 Load Push List
+        <input type="file" name="push_file" accept=".xlsx,.xls,.csv" onchange="this.form.submit()">
+      </label>
+    </form>
+    <a href="{{ url_for('download_template', name='eval') }}" class="btn btn-sm btn-purple">📥 Eval Template</a>
+    <a href="{{ url_for('download_template', name='push') }}" class="btn btn-sm btn-purple">📥 Push Template</a>
+    {% if has_eval %}<span class="status-badge success">Eval ✓</span>{% endif %}
+    {% if has_push %}<span class="status-badge success">Push ✓</span>{% endif %}
+  </div>
+
+  <form method="post" id="calc-form" class="calc-form">
+    <input type="hidden" name="action" value="calculate">
+    <input type="hidden" name="enable_eval" id="enable_eval_hidden" value="">
+    <input type="hidden" name="enable_push" id="enable_push_hidden" value="">
+
+    <div class="date-frame card-inner">
+      <h3>Filter by Date Range</h3>
+      <div class="date-row">
+        <label>From:</label>
+        <input type="date" name="date_from" value="{{ date_from }}" required>
+        <label>To:</label>
+        <input type="date" name="date_to" value="{{ date_to }}" required>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:1rem;">
+      <button type="submit" class="btn btn-blue btn-lg">⚙️ Calculate & Save KPI</button>
+    </div>
+  </form>
+
+  <p class="status-text">{% if has_main %}Ready to calculate{% else %}Waiting for data...{% endif %}</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleExtras() {
+  const evalOn = document.getElementById('enable_eval').checked;
+  const pushOn = document.getElementById('enable_push').checked;
+  document.getElementById('extras-frame').classList.toggle('hidden', !evalOn && !pushOn);
+}
+
+document.getElementById('calc-form').addEventListener('submit', () => {
+  document.getElementById('enable_eval_hidden').value =
+    document.getElementById('enable_eval').checked ? 'on' : '';
+  document.getElementById('enable_push_hidden').value =
+    document.getElementById('enable_push').checked ? 'on' : '';
+});
+</script>
+{% endblock %}

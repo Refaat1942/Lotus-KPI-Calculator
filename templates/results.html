@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Overall KPI Results — Lotus KPI{% endblock %}
+{% block content %}
+<h1 class="page-title">Overall KPI Results</h1>
+
+<div class="card animate-fade">
+  <form method="get" class="filter-bar">
+    <label>🔍 Search:</label>
+    <input type="text" name="q" value="{{ filters.q }}" placeholder="Name or code..." class="input-sm">
+    <select name="branch" onchange="this.form.submit()">
+      {% for b in branches %}
+      <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %}>{{ b }}</option>
+      {% endfor %}
+    </select>
+    <select name="job" onchange="this.form.submit()">
+      {% for j in jobs %}
+      <option value="{{ j }}" {% if filters.job == j %}selected{% endif %}>{{ j }}</option>
+      {% endfor %}
+    </select>
+    <select name="shift" onchange="this.form.submit()">
+      {% for s in shifts %}
+      <option value="{{ s }}" {% if filters.shift == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <label class="checkbox-label">
+      <input type="checkbox" name="include_unknown" value="1" {% if filters.include_unknown %}checked{% endif %} onchange="this.form.submit()">
+      Include Unknown Jobs
+    </label>
+    <a href="{{ url_for('export_results', **filters) }}" class="btn btn-green">Export Excel 📊</a>
+  </form>
+
+  {% if has_data %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          {% for col in columns %}
+          <th>{{ col }}</th>
+          {% endfor %}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="row-animate">
+          {% for cell in row %}
+          <td>{{ cell }}</td>
+          {% endfor %}
+          <td>
+            {% if row[2] == 'Unknown' %}
+            <form method="post" action="{{ url_for('delete_unknown', code=row[1]) }}" style="display:inline" onsubmit="return confirm('Delete this unknown employee?')">
+              <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+            </form>
+            {% endif %}
+            <a href="{{ url_for('detailed', code=row[1]) }}" class="btn btn-xs btn-outline">Details</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ columns|length + 1 }}" class="empty">No matching results.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No KPI results yet. <a href="{{ url_for('upload') }}">Upload and calculate</a> first.</p>
+  {% endif %}
+</div>
+{% endblock %}

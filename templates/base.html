@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Lotus KPI{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="navbar animate-slide">
+    <div class="brand">Lotus KPI System 📊</div>
+    <div class="nav-tabs">
+      <a href="{{ url_for('upload') }}" class="{% if request.endpoint == 'upload' %}active{% endif %}">1. Upload & Filter</a>
+      <a href="{{ url_for('results') }}" class="{% if request.endpoint == 'results' %}active{% endif %}">2. Overall KPI Results</a>
+      <a href="{{ url_for('detailed') }}" class="{% if request.endpoint == 'detailed' %}active{% endif %}">3. Detailed Score</a>
+      <a href="{{ url_for('settings') }}" class="{% if request.endpoint == 'settings' %}active{% endif %}">4. KPI Logic Settings</a>
+      <a href="{{ url_for('history') }}" class="{% if request.endpoint in ('history', 'history_detail') %}active{% endif %}">5. History by Period</a>
+      <a href="{{ url_for('compare') }}" class="{% if request.endpoint == 'compare' %}active{% endif %}">6. Compare Periods</a>
+    </div>
+    <a class="logout" href="{{ url_for('logout') }}">Logout</a>
+  </nav>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-wrap">
+        {% for cat, msg in messages %}
+          <div class="flash flash-{{ cat }} animate-fade">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="container animate-fade">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">Copyright Lotus Pharmacies 2026</footer>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

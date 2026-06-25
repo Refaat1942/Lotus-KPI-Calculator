@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}History by Period — Lotus KPI{% endblock %}
+{% block content %}
+<h1 class="page-title">Results History</h1>
+
+<div class="card animate-fade">
+  <div class="history-top">
+    <div class="history-left">
+      <h3 class="section-title">📊 Results History (DB)</h3>
+      <a href="{{ url_for('history') }}" class="btn btn-blue btn-sm">🔄 Refresh</a>
+    </div>
+    <form method="post" action="{{ url_for('history_recalc') }}" class="cache-frame">
+      <span>📁 Saved Datasets:</span>
+      <select name="dataset">
+        {% for d in datasets %}
+        <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-orange btn-sm">⚡ Calculate KPI</button>
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Saved Timestamp</th>
+          <th>Period</th>
+          <th>Total Pharmacists Calculated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary %}
+        <tr class="row-animate clickable" onclick="window.location='{{ url_for('history_detail', saved_at=row[0]) }}'">
+          <td>{{ row[0] }}</td>
+          <td>{{ row[1] }}</td>
+          <td>{{ row[2] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">No history records yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">Double-click a row or click to view details.</p>
+</div>
+{% endblock %}

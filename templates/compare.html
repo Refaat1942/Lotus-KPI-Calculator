@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Compare Periods — Lotus KPI{% endblock %}
+{% block content %}
+<h1 class="page-title">Compare Periods</h1>
+
+<div class="card animate-fade">
+  <div class="compare-top">
+    <form method="post" enctype="multipart/form-data" class="inline-form">
+      <input type="hidden" name="action" value="load_p2">
+      <span class="label-bold">Upload Period 2 Data:</span>
+      <label class="file-label btn btn-green btn-sm">
+        📥 Load Excel/CSV
+        <input type="file" name="p2_file" accept=".xlsx,.xls,.csv" onchange="this.form.submit()">
+      </label>
+      {% if has_p2 %}<span class="status-badge success">P2 loaded ✓</span>{% endif %}
+    </form>
+
+    <form method="post" class="date-frame inline">
+      <input type="hidden" name="action" value="run_compare">
+      <span class="label-bold">Period 2 Dates:</span>
+      <input type="date" name="p2_from" value="{{ p2_from }}" required>
+      <span>To:</span>
+      <input type="date" name="p2_to" value="{{ p2_to }}" required>
+      <button type="submit" class="btn btn-orange">⚡ Run Comparison</button>
+    </form>
+
+    {% if not has_p1 %}
+    <p class="warning">⚠ Calculate Period 1 in Upload tab first.</p>
+    {% endif %}
+  </div>
+
+  <form method="get" class="filter-bar">
+    <label>🔍 Search:</label>
+    <input type="text" name="q" value="{{ filters.q }}" placeholder="Name or code..." class="input-sm">
+    <select name="branch" onchange="this.form.submit()">
+      {% for b in branches %}
+      <option value="{{ b }}" {% if filters.branch == b %}selected{% endif %}>{{ b }}</option>
+      {% endfor %}
+    </select>
+    <select name="job" onchange="this.form.submit()">
+      {% for j in jobs %}
+      <option value="{{ j }}" {% if filters.job == j %}selected{% endif %}>{{ j }}</option>
+      {% endfor %}
+    </select>
+    <a href="{{ url_for('export_compare', **filters) }}" class="btn btn-green">Export Excel 📊</a>
+    <span class="status-text">{% if has_comp %}✅ Comparison ready{% else %}Waiting for P2 data...{% endif %}</span>
+  </form>
+
+  {% if has_comp %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          {% for col in columns %}
+          <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="row-animate">
+          {% for cell in row %}
+          <td class="{% if loop.index == 7 and cell.startswith('+') %}positive{% elif loop.index == 7 and cell.startswith('-') %}negative{% endif %}">{{ cell }}</td>
+          {% endfor %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ columns|length }}" class="empty">No matching results.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

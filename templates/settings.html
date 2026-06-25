@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}KPI Logic Settings — Lotus KPI{% endblock %}
+{% block content %}
+<h1 class="page-title">KPI Logic Settings</h1>
+
+<div class="settings-actions card animate-fade">
+  <a href="{{ url_for('export_logic') }}" class="btn btn-blue">📤 Export Template</a>
+  <form method="post" enctype="multipart/form-data" class="inline-form">
+    <input type="hidden" name="action" value="import">
+    <label class="file-label btn btn-purple">
+      📥 Import Template
+      <input type="file" name="logic_file" accept=".json" onchange="this.form.submit()">
+    </label>
+  </form>
+</div>
+
+<form method="post" class="settings-form">
+  {% for cat in categories %}
+  <div class="card settings-cat animate-fade">
+    <h2 class="cat-title">{{ cat.name }}</h2>
+    <div class="metrics-grid">
+      {% for met in cat.metrics %}
+      <div class="metric-col">
+        <h4 class="metric-title">{{ met.name }}</h4>
+        <div class="tier-rows" data-key="{{ met.form_key }}">
+          {% for tier in met.tiers %}
+          <div class="tier-row">
+            <span class="tier-label">From</span>
+            <input type="number" step="any" name="{{ met.form_key }}_from" value="{{ tier.from }}" class="tier-input" readonly>
+            <span class="tier-label">To</span>
+            <input type="number" step="any" name="{{ met.form_key }}_target" value="{{ tier.target }}" class="tier-input" required>
+            <span class="tier-label">➡ Pts:</span>
+            <input type="number" step="any" name="{{ met.form_key }}_points" value="{{ tier.points }}" class="tier-input" required>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="btn btn-xs btn-dark add-tier" data-key="{{ met.form_key }}">+ Add Tier</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="settings-bottom">
+    <button type="submit" name="action" value="save" class="btn btn-orange btn-lg">💾 Save Logic Changes</button>
+    <button type="submit" name="action" value="recalculate" class="btn btn-red btn-lg">🔄 Save & Recalculate KPI</button>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.add-tier').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.key;
+    const container = btn.previousElementSibling;
+    const row = document.createElement('div');
+    row.className = 'tier-row';
+    row.innerHTML = `
+      <span class="tier-label">From</span>
+      <input type="number" step="any" name="${key}_from" value="0" class="tier-input" readonly>
+      <span class="tier-label">To</span>
+      <input type="number" step="any" name="${key}_target" value="0" class="tier-input" required>
+      <span class="tier-label">➡ Pts:</span>
+      <input type="number" step="any" name="${key}_points" value="0" class="tier-input" required>
+      <button type="button" class="btn btn-xs btn-danger remove-tier">❌</button>
+    `;
+    row.querySelector('.remove-tier').addEventListener('click', () => row.remove());
+    container.appendChild(row);
+  });
+});
+</script>
+{% endblock %}

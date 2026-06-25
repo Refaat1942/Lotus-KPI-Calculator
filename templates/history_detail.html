@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}History Detail — Lotus KPI{% endblock %}
+{% block content %}
+<h1 class="page-title">Period Details</h1>
+
+<div class="card animate-fade">
+  <div class="history-detail-top">
+    <h3>Data for calculation run on: {{ saved_at }}</h3>
+    <a href="{{ url_for('history_export', saved_at=saved_at) }}" class="btn btn-green">📥 Export Detailed Excel</a>
+    <a href="{{ url_for('history') }}" class="btn btn-outline">← Back to History</a>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          {% for col in columns %}
+          <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="row-animate">
+          {% for cell in row %}
+          <td>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

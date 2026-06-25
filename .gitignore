@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Runtime / uploads
+uploads/
+data_cache/
+kpi_history.db
+*.pkl
+
+# Secrets
+.env
+.env.*
+
+# Build / desktop packaging
+dist/
+build/
+*.spec.bak
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Temp exports
+*.tmp.xlsx
+
+# Sample / uploaded data files
+*.xlsx
+*.XLSX
+*.xls
+*.csv

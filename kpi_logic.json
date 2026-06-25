@@ -1,0 +1,466 @@
+{
+    "REGULAR": {
+        "receipts": [
+            {
+                "target": 8,
+                "points": 200
+            },
+            {
+                "target": 16,
+                "points": 300
+            },
+            {
+                "target": 24,
+                "points": 400
+            },
+            {
+                "target": 32,
+                "points": 500
+            },
+            {
+                "target": 40,
+                "points": 600
+            }
+        ],
+        "sales": [
+            {
+                "target": 2000,
+                "points": 200
+            },
+            {
+                "target": 5000,
+                "points": 400
+            },
+            {
+                "target": 10000,
+                "points": 600
+            },
+            {
+                "target": 15000,
+                "points": 800
+            },
+            {
+                "target": 20000,
+                "points": 1000
+            }
+        ],
+        "avg_receipt": [
+            {
+                "target": 100,
+                "points": 100
+            },
+            {
+                "target": 200,
+                "points": 200
+            },
+            {
+                "target": 300,
+                "points": 300
+            },
+            {
+                "target": 400,
+                "points": 400
+            },
+            {
+                "target": 500,
+                "points": 500
+            }
+        ],
+        "units": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ]
+    },
+    "DELIVERY": {
+        "receipts": [
+            {
+                "target": 8,
+                "points": 100
+            },
+            {
+                "target": 16,
+                "points": 200
+            },
+            {
+                "target": 24,
+                "points": 300
+            },
+            {
+                "target": 32,
+                "points": 400
+            },
+            {
+                "target": 40,
+                "points": 500
+            }
+        ],
+        "sales": [
+            {
+                "target": 2000,
+                "points": 200
+            },
+            {
+                "target": 5000,
+                "points": 400
+            },
+            {
+                "target": 10000,
+                "points": 600
+            },
+            {
+                "target": 15000,
+                "points": 800
+            },
+            {
+                "target": 20000,
+                "points": 1000
+            }
+        ],
+        "avg_receipt": [
+            {
+                "target": 100,
+                "points": 100
+            },
+            {
+                "target": 200,
+                "points": 200
+            },
+            {
+                "target": 300,
+                "points": 300
+            },
+            {
+                "target": 400,
+                "points": 400
+            },
+            {
+                "target": 500,
+                "points": 500
+            }
+        ],
+        "units": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ]
+    },
+    "DIGITAL": {
+        "receipts": [
+            {
+                "target": 8,
+                "points": 100
+            },
+            {
+                "target": 16,
+                "points": 200
+            },
+            {
+                "target": 24,
+                "points": 300
+            },
+            {
+                "target": 32,
+                "points": 400
+            },
+            {
+                "target": 40,
+                "points": 500
+            }
+        ],
+        "sales": [
+            {
+                "target": 2000,
+                "points": 200
+            },
+            {
+                "target": 5000,
+                "points": 400
+            },
+            {
+                "target": 10000,
+                "points": 600
+            },
+            {
+                "target": 15000,
+                "points": 800
+            },
+            {
+                "target": 20000,
+                "points": 1000
+            }
+        ],
+        "avg_receipt": [
+            {
+                "target": 100,
+                "points": 100
+            },
+            {
+                "target": 200,
+                "points": 200
+            },
+            {
+                "target": 300,
+                "points": 300
+            },
+            {
+                "target": 400,
+                "points": 400
+            },
+            {
+                "target": 500,
+                "points": 500
+            }
+        ],
+        "units": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ]
+    },
+    "INSURANCE": {
+        "receipts": [
+            {
+                "target": 4,
+                "points": 200
+            },
+            {
+                "target": 8,
+                "points": 300
+            },
+            {
+                "target": 12,
+                "points": 400
+            },
+            {
+                "target": 16,
+                "points": 500
+            },
+            {
+                "target": 20,
+                "points": 600
+            }
+        ],
+        "sales": [
+            {
+                "target": 2000,
+                "points": 200
+            },
+            {
+                "target": 5000,
+                "points": 400
+            },
+            {
+                "target": 10000,
+                "points": 600
+            },
+            {
+                "target": 15000,
+                "points": 800
+            },
+            {
+                "target": 20000,
+                "points": 1000
+            }
+        ],
+        "avg_receipt": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ],
+        "units": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ]
+    },
+    "EVALUATION": {
+        "performance": [
+            {
+                "target": 49,
+                "points": 0
+            },
+            {
+                "target": 59,
+                "points": 10
+            },
+            {
+                "target": 64,
+                "points": 20
+            },
+            {
+                "target": 69,
+                "points": 30
+            },
+            {
+                "target": 79,
+                "points": 40
+            },
+            {
+                "target": 89,
+                "points": 50
+            },
+            {
+                "target": 94,
+                "points": 60
+            },
+            {
+                "target": 100,
+                "points": 70
+            }
+        ],
+        "customer_service": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ],
+        "knowledge": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ]
+    },
+    "PUSH_LIST": {
+        "quantity": [
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            },
+            {
+                "target": 0,
+                "points": 0
+            }
+        ]
+    }
+}
