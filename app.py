@@ -1,6 +1,8 @@
 import os
+import pickle
 from functools import wraps
 
+import pandas as pd
 from flask import (
     Flask, render_template, request, redirect, url_for,
     session, flash, send_file, jsonify,
@@ -15,6 +17,96 @@ app.config.from_object(Config)
 
 _engines = {}
 
+_DF_KEYS = {
+    "main": "raw_df",
+    "eval": "eval_df",
+    "push": "push_df",
+    "p2": "raw_df_p2",
+}
+
+
+def _session_file(sid, name):
+    return os.path.join(app.config["DATA_CACHE"], f"sess_{sid}_{name}.pkl")
+
+
+def _persist_dataframe(sid, name, df):
+    path = _session_file(sid, name)
+    if df is None:
+        session.pop(f"has_{name}", None)
+        if os.path.exists(path):
+            os.remove(path)
+        return
+    os.makedirs(app.config["DATA_CACHE"], exist_ok=True)
+    df.to_pickle(path)
+    session[f"has_{name}"] = True
+
+
+def _restore_dataframe(sid, name):
+    path = _session_file(sid, name)
+    if os.path.exists(path):
+        return pd.read_pickle(path)
+    return None
+
+
+def _persist_engine_state(eng, sid):
+    state = {
+        "all_results": eng.all_results,
+        "detailed_scores": eng.detailed_scores,
+        "excluded_stats": eng.excluded_stats,
+        "comp_results_data": eng.comp_results_data,
+        "enable_eval": eng.enable_eval,
+        "enable_push": eng.enable_push,
+        "last_period": eng.last_period,
+    }
+    os.makedirs(app.config["DATA_CACHE"], exist_ok=True)
+    with open(_session_file(sid, "state"), "wb") as f:
+        pickle.dump(state, f)
+
+
+def _restore_engine_state(eng, sid):
+    path = _session_file(sid, "state")
+    if not os.path.exists(path):
+        return
+    with open(path, "rb") as f:
+        state = pickle.load(f)
+    eng.all_results = state.get("all_results", [])
+    eng.detailed_scores = state.get("detailed_scores", {})
+    eng.excluded_stats = state.get("excluded_stats", {})
+    eng.comp_results_data = state.get("comp_results_data", [])
+    eng.enable_eval = state.get("enable_eval", False)
+    eng.enable_push = state.get("enable_push", False)
+    eng.last_period = state.get("last_period", ("", ""))
+
+
+def _persist_engine(eng):
+    sid = session.get("sid")
+    if not sid:
+        return
+    for name, attr in _DF_KEYS.items():
+        _persist_dataframe(sid, name, getattr(eng, attr, None))
+    if eng.all_results or eng.comp_results_data:
+        _persist_engine_state(eng, sid)
+
+
+def _restore_engine(eng):
+    sid = session.get("sid")
+    if not sid:
+        return
+    for name, attr in _DF_KEYS.items():
+        df = _restore_dataframe(sid, name)
+        if df is not None:
+            setattr(eng, attr, df)
+    _restore_engine_state(eng, sid)
+
+
+def _clear_session_files(sid):
+    if not sid:
+        return
+    for name in list(_DF_KEYS.keys()) + ["state"]:
+        path = _session_file(sid, name)
+        if os.path.exists(path):
+            os.remove(path)
+
 
 def get_engine():
     sid = session.get("sid")
@@ -27,7 +119,9 @@ def get_engine():
             app.config["DATA_CACHE"],
             app.config["UPLOAD_FOLDER"],
         )
-    return _engines[sid]
+    eng = _engines[sid]
+    _restore_engine(eng)
+    return eng
 
 
 def login_required(f):
@@ -63,6 +157,7 @@ def login():
 def logout():
     sid = session.pop("sid", None)
     _engines.pop(sid, None)
+    _clear_session_files(sid)
     session.clear()
     return redirect(url_for("login"))
 
@@ -91,6 +186,7 @@ def upload():
                 date_from, date_to = eng.guess_date_range()
                 session["date_from"] = date_from
                 session["date_to"] = date_to
+                _persist_engine(eng)
                 flash("Main data loaded successfully!", "success")
 
         elif action == "load_eval" and "eval_file" in request.files:
@@ -98,6 +194,7 @@ def upload():
             if f.filename:
                 path = save_upload(f)
                 eng.eval_df = eng.read_file(path)
+                _persist_engine(eng)
                 flash("Evaluation data loaded!", "success")
 
         elif action == "load_push" and "push_file" in request.files:
@@ -105,9 +202,11 @@ def upload():
             if f.filename:
                 path = save_upload(f)
                 eng.push_df = eng.read_file(path)
+                _persist_engine(eng)
                 flash("Push List data loaded!", "success")
 
         elif action == "calculate":
+            _restore_engine(eng)
             date_from = request.form.get("date_from", date_from)
             date_to = request.form.get("date_to", date_to)
             session["date_from"] = date_from
@@ -122,6 +221,7 @@ def upload():
             if not result["ok"]:
                 flash(result["error"], "error")
             else:
+                _persist_engine(eng)
                 flash(f"Calculated and archived {result['count']} employees.", "success")
                 return redirect(url_for("results"))
 
@@ -129,9 +229,9 @@ def upload():
         "upload.html",
         date_from=date_from,
         date_to=date_to,
-        has_main=eng.raw_df is not None,
-        has_eval=eng.eval_df is not None,
-        has_push=eng.push_df is not None,
+        has_main=eng.raw_df is not None or session.get("has_main"),
+        has_eval=eng.eval_df is not None or session.get("has_eval"),
+        has_push=eng.push_df is not None or session.get("has_push"),
     )
 
 
@@ -162,6 +262,7 @@ def results():
 def delete_unknown(code):
     eng = get_engine()
     eng.delete_unknown_employee(code)
+    _persist_engine(eng)
     flash("Unknown employee removed.", "success")
     return redirect(url_for("results"))
 
@@ -232,12 +333,14 @@ def settings():
                 new_logic = eng.parse_logic_from_form(request.form)
                 eng.save_logic(new_logic)
                 flash("Settings saved!", "success")
-                if action == "recalculate" and eng.raw_df is not None:
+                if action == "recalculate" and (eng.raw_df is not None or session.get("has_main")):
+                    _restore_engine(eng)
                     d_from = session.get("date_from", "")
                     d_to = session.get("date_to", "")
                     if d_from and d_to:
                         result = eng.process_data(d_from, d_to, eng.enable_eval, eng.enable_push)
                         if result["ok"]:
+                            _persist_engine(eng)
                             flash(f"Recalculated {result['count']} employees.", "success")
                             return redirect(url_for("results"))
                         flash(result["error"], "error")
@@ -326,6 +429,7 @@ def history_recalc():
     if result["ok"]:
         session["date_from"] = result.get("start", "")
         session["date_to"] = result.get("end", "")
+        _persist_engine(eng)
         flash("Dataset recalculated successfully!", "success")
         return redirect(url_for("results"))
     flash(result["error"], "error")
@@ -349,14 +453,17 @@ def compare():
                 p2_from, p2_to = eng.guess_date_range(eng.raw_df_p2)
                 session["p2_from"] = p2_from
                 session["p2_to"] = p2_to
+                _persist_engine(eng)
                 flash("Period 2 data loaded!", "success")
         elif action == "run_compare":
+            _restore_engine(eng)
             p2_from = request.form.get("p2_from", p2_from)
             p2_to = request.form.get("p2_to", p2_to)
             session["p2_from"] = p2_from
             session["p2_to"] = p2_to
             result = eng.process_comparison(p2_from, p2_to)
             if result["ok"]:
+                _persist_engine(eng)
                 flash(f"Comparison completed for {result['count']} employees.", "success")
             else:
                 flash(result["error"], "error")
@@ -376,7 +483,7 @@ def compare():
         p2_from=p2_from,
         p2_to=p2_to,
         has_p1=bool(eng.all_results),
-        has_p2=eng.raw_df_p2 is not None,
+        has_p2=eng.raw_df_p2 is not None or session.get("has_p2"),
         has_comp=bool(eng.comp_results_data),
     )
 
