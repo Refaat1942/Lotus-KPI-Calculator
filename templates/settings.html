@@ -29,7 +29,7 @@
             <input type="number" step="any" name="{{ met.form_key }}_from" value="{{ tier.from }}" class="tier-input" readonly>
             <span class="tier-label">To</span>
             <input type="number" step="any" name="{{ met.form_key }}_target" value="{{ tier.target }}" class="tier-input" required>
-            <span class="tier-label">➡ Pts:</span>
+            <span class="tier-label">Pts</span>
             <input type="number" step="any" name="{{ met.form_key }}_points" value="{{ tier.points }}" class="tier-input" required>
           </div>
           {% endfor %}
@@ -60,7 +60,7 @@ document.querySelectorAll('.add-tier').forEach(btn => {
       <input type="number" step="any" name="${key}_from" value="0" class="tier-input" readonly>
       <span class="tier-label">To</span>
       <input type="number" step="any" name="${key}_target" value="0" class="tier-input" required>
-      <span class="tier-label">➡ Pts:</span>
+      <span class="tier-label">Pts</span>
       <input type="number" step="any" name="${key}_points" value="0" class="tier-input" required>
       <button type="button" class="btn btn-xs btn-danger remove-tier">❌</button>
     `;
