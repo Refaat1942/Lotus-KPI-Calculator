@@ -1,13 +1,13 @@
 [Unit]
 Description=Lotus KPI Web Application
-After=network.target
+After=network.target docker.service
+Requires=docker.service
 
 [Service]
 User=www-data
 WorkingDirectory=/opt/kpi-web
-Environment=SECRET_KEY=change-this-to-a-long-random-string
-Environment=KPI_ADMIN_USER=admin
-Environment=KPI_ADMIN_PASS=admin
+# All secrets/config live in /opt/kpi-web/.env (see .env.example). Not committed.
+EnvironmentFile=/opt/kpi-web/.env
 ExecStart=/opt/kpi-web/venv/bin/gunicorn -w 1 -b 0.0.0.0:20000 app:app --timeout 120
 Restart=always
 RestartSec=5
