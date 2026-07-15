@@ -9,6 +9,41 @@ KPI Flask app (gunicorn)  --psycopg2 127.0.0.1:5432-->  PostgreSQL (Docker: kpi-
 kpi-backup.timer (24h) --> kpi-backup.service --> pg_dump (inside container) --> backups/*.dump
 ```
 
+## Quick start: one-command deploy
+
+If Docker is already installed on the VPS, you can deploy (or update) everything
+with a single command from the app folder:
+
+```bash
+cd /opt/kpi-web        # your app folder
+sudo ./deploy.sh
+```
+
+`deploy.sh` is safe to re-run any time. It:
+
+1. Pulls the latest code (`main`)
+2. Creates `.env` with strong random secrets on first run (prints the generated
+   admin password once — save it), and keeps your existing `.env` on re-runs
+3. Starts PostgreSQL in Docker and waits for it to be healthy
+4. Creates/updates the Python virtualenv and installs dependencies
+5. Installs/updates the systemd services (web app + 24h backup timer)
+6. Restarts the web app and enables the 24-hour backup timer
+7. Runs one backup immediately and prints status
+
+You can override defaults with env vars, e.g.
+`sudo APP_DIR=/srv/kpi APP_USER=kpi ./deploy.sh`.
+
+If Docker is **not** installed yet, install it first:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo systemctl enable --now docker
+```
+
+---
+
+The manual steps below do the same thing, one piece at a time.
+
 ## 1. Prerequisites
 
 Install Docker Engine + the Compose plugin (if not already present):
