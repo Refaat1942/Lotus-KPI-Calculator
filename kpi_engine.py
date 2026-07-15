@@ -684,14 +684,19 @@ class KPIEngine:
                 metrics = ["receipts", "sales", "avg_receipt", "units"]
             for met_k in metrics:
                 key = f"{cat_k}_{met_k}"
+                froms = form_data.getlist(f"{key}_from")
                 targets = form_data.getlist(f"{key}_target")
                 points = form_data.getlist(f"{key}_points")
                 tiers = []
-                for t, p in zip(targets, points):
-                    if t.strip() == "" and p.strip() == "":
+                for f_val, t_val, p_val in zip(froms, targets, points):
+                    if t_val.strip() == "" and p_val.strip() == "":
                         continue
-                    tiers.append({"target": float(t), "points": int(float(p))})
+                    tier = {"target": float(t_val), "points": int(float(p_val))}
+                    if f_val.strip() != "":
+                        tier["from"] = float(f_val)
+                    tiers.append(tier)
                 if tiers:
+                    tiers.sort(key=lambda x: (x.get("from", 0), x["target"]))
                     new_logic[cat_k][met_k] = tiers
         return new_logic
 

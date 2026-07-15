@@ -405,11 +405,16 @@ def settings():
             prev = 0
             tier_rows = []
             for tier in tiers:
-                tier_rows.append({"from": prev, "target": tier["target"], "points": tier["points"]})
+                tier_from = tier["from"] if "from" in tier else prev
+                tier_rows.append({
+                    "from": tier_from,
+                    "target": tier["target"],
+                    "points": tier["points"],
+                })
                 try:
                     prev = int(float(tier["target"])) + 1
                 except Exception:
-                    prev = ""
+                    prev = tier_from
             metrics.append({"key": met_k, "name": met_n, "tiers": tier_rows, "form_key": f"{cat_k}_{met_k}"})
         categories.append({"key": cat_k, "name": cat_n, "metrics": metrics})
 
