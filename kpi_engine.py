@@ -2,11 +2,11 @@
 import copy
 import json
 import os
-import sqlite3
 import tempfile
 from datetime import datetime
 
 import pandas as pd
+import psycopg2
 
 try:
     import arabic_reshaper
@@ -109,8 +109,8 @@ def find_col(df, possible_names):
 
 
 class KPIEngine:
-    def __init__(self, db_path, logic_file, data_cache, upload_folder):
-        self.db_path = db_path
+    def __init__(self, dsn, logic_file, data_cache, upload_folder):
+        self.dsn = dsn
         self.logic_file = logic_file
         self.data_cache = data_cache
         self.upload_folder = upload_folder
@@ -130,12 +130,16 @@ class KPIEngine:
         os.makedirs(upload_folder, exist_ok=True)
         self._setup_database()
 
+    def _connect(self):
+        """Return a new psycopg2 connection to the configured PostgreSQL database."""
+        return psycopg2.connect(self.dsn)
+
     def _setup_database(self):
-        conn = sqlite3.connect(self.db_path)
+        conn = self._connect()
         cur = conn.cursor()
         cur.execute('''
             CREATE TABLE IF NOT EXISTS kpi_records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 start_date TEXT,
                 end_date TEXT,
@@ -151,19 +155,10 @@ class KPIEngine:
                 eval_pts REAL DEFAULT 0,
                 push_pts REAL DEFAULT 0,
                 grand_total REAL,
-                job_title TEXT
+                job_title TEXT,
+                excluded_sales REAL DEFAULT 0
             )
         ''')
-        for col_sql in [
-            "ALTER TABLE kpi_records ADD COLUMN excluded_sales REAL DEFAULT 0",
-            "ALTER TABLE kpi_records ADD COLUMN working_days REAL DEFAULT 0",
-            "ALTER TABLE kpi_records ADD COLUMN eval_pts REAL DEFAULT 0",
-            "ALTER TABLE kpi_records ADD COLUMN push_pts REAL DEFAULT 0",
-        ]:
-            try:
-                cur.execute(col_sql)
-            except sqlite3.OperationalError:
-                pass
         conn.commit()
         conn.close()
 
@@ -494,13 +489,13 @@ class KPIEngine:
             return {"ok": False, "error": str(e)}
 
     def save_results_to_db(self, start_date, end_date):
-        conn = sqlite3.connect(self.db_path)
+        conn = self._connect()
         cur = conn.cursor()
         for r in self.all_results:
             cur.execute(
                 '''INSERT INTO kpi_records (start_date, end_date, emp_name, emp_code, job_title, branch, shift,
                    working_days, reg_pts, delivery_pts, digital_pts, insurance_pts, eval_pts, push_pts, grand_total)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                 (start_date, end_date, r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11], r[12])
             )
         conn.commit()
@@ -636,23 +631,27 @@ class KPIEngine:
             return {"ok": False, "error": str(e)}
 
     def load_history_summary(self):
-        conn = sqlite3.connect(self.db_path)
+        conn = self._connect()
         cur = conn.cursor()
         cur.execute(
-            """SELECT datetime(saved_at, 'localtime'), start_date || ' to ' || end_date, COUNT(id)
-               FROM kpi_records GROUP BY saved_at, start_date, end_date ORDER BY saved_at DESC"""
+            """SELECT to_char(saved_at, 'YYYY-MM-DD HH24:MI:SS'),
+                      start_date || ' to ' || end_date, COUNT(id)
+               FROM kpi_records
+               GROUP BY saved_at, start_date, end_date
+               ORDER BY saved_at DESC"""
         )
         rows = cur.fetchall()
         conn.close()
         return rows
 
     def load_history_detail(self, saved_timestamp):
-        conn = sqlite3.connect(self.db_path)
+        conn = self._connect()
         cur = conn.cursor()
         cur.execute(
             """SELECT emp_name, emp_code, job_title, branch, shift, working_days,
                       reg_pts, delivery_pts, digital_pts, insurance_pts, eval_pts, push_pts, grand_total
-               FROM kpi_records WHERE datetime(saved_at, 'localtime') = ?""",
+               FROM kpi_records
+               WHERE to_char(saved_at, 'YYYY-MM-DD HH24:MI:SS') = %s""",
             (saved_timestamp,)
         )
         rows = cur.fetchall()

@@ -131,7 +131,7 @@ def get_engine():
         session["sid"] = sid
     if sid not in _engines:
         _engines[sid] = KPIEngine(
-            app.config["DB_PATH"],
+            app.config["DATABASE_URL"],
             app.config["LOGIC_FILE"],
             app.config["DATA_CACHE"],
             app.config["UPLOAD_FOLDER"],
