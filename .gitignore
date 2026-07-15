@@ -15,6 +15,10 @@ kpi_history.db
 # Secrets
 .env
 .env.*
+!.env.example
+
+# Runtime DB backups
+backups/
 
 # Build / desktop packaging
 dist/

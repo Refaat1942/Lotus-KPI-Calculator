@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: kpi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-kpi}
+      POSTGRES_USER: ${DB_USER:-kpi}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    # Bind to localhost only — the DB must not be reachable from the public network.
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - kpi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-kpi} -d ${DB_NAME:-kpi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  kpi_pgdata:

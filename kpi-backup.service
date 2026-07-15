@@ -1,0 +1,15 @@
+[Unit]
+Description=Lotus KPI PostgreSQL Backup
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/kpi-web
+# Provides DB_USER/DB_NAME/DB_PASSWORD/PG_CONTAINER/BACKUP_* (see .env.example).
+EnvironmentFile=/opt/kpi-web/.env
+# Runs pg_dump inside the Docker Postgres container; needs docker access.
+ExecStart=/opt/kpi-web/venv/bin/python -m backup
+
+[Install]
+WantedBy=multi-user.target
