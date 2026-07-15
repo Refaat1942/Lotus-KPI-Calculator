@@ -61,24 +61,62 @@ git checkout "$GIT_BRANCH"
 git pull origin "$GIT_BRANCH"
 
 # ---------------------------------------------------------------------------
-# 2. Ensure .env exists (generate strong secrets on first run)
+# 2. Ensure .env exists and has all required keys
 # ---------------------------------------------------------------------------
+_ensure_env() {
+    local key="$1" default="$2" generate="${3:-0}"
+    local val
+    if grep -q "^${key}=" .env 2>/dev/null; then
+        val="$(grep "^${key}=" .env | head -1 | cut -d= -f2-)"
+    else
+        val=""
+    fi
+    # Treat empty or placeholder values as missing.
+    case "$val" in
+        ""|change-this*|change-me)
+            if [ "$generate" = "1" ]; then
+                case "$key" in
+                    SECRET_KEY)     val="$(openssl rand -hex 32)" ;;
+                    KPI_ADMIN_PASS) val="$(openssl rand -hex 8)" ;;
+                    *)              val="$(openssl rand -hex 24)" ;;
+                esac
+            else
+                val="$default"
+            fi
+            if grep -q "^${key}=" .env 2>/dev/null; then
+                sed -i "s|^${key}=.*|${key}=${val}|" .env
+            else
+                echo "${key}=${val}" >> .env
+            fi
+            warn "Set missing ${key} in .env"
+            ;;
+    esac
+}
+
 if [ ! -f ".env" ]; then
     log "First run: creating .env with strong random secrets"
+    cp .env.example .env
     DB_PASSWORD="$(openssl rand -hex 24)"
     SECRET_KEY="$(openssl rand -hex 32)"
     KPI_ADMIN_PASS="$(openssl rand -hex 8)"
-
-    cp .env.example .env
     sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|"       .env
     sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${SECRET_KEY}|"          .env
     sed -i "s|^KPI_ADMIN_PASS=.*|KPI_ADMIN_PASS=${KPI_ADMIN_PASS}|" .env
-
     warn "A new admin password was generated. SAVE IT NOW:"
     printf "\n    Admin user:     admin\n    Admin password: %s\n\n" "$KPI_ADMIN_PASS"
-    warn "You can change it later by editing $APP_DIR/.env and re-running this script."
 else
-    log ".env already exists — keeping your current secrets"
+    log ".env already exists — checking for missing database settings"
+    _ensure_env DB_NAME kpi 0
+    _ensure_env DB_USER kpi 0
+    _ensure_env DB_HOST 127.0.0.1 0
+    _ensure_env DB_PORT 5432 0
+    _ensure_env PG_CONTAINER kpi-postgres 0
+    _ensure_env DB_PASSWORD "" 1
+    _ensure_env SECRET_KEY "" 1
+    _ensure_env KPI_ADMIN_PASS "" 1
+    _ensure_env BACKUP_INTERVAL_HOURS 24 0
+    _ensure_env BACKUP_RETENTION_DAYS 30 0
+    _ensure_env ENABLE_INAPP_BACKUP 0 0
 fi
 
 # Lock down .env so only root and the app user can read it
