@@ -305,12 +305,27 @@ input:focus, select:focus {
 .settings-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .settings-cat { margin-bottom: 1rem; }
 .cat-title { color: var(--green); margin: 0 0 1rem; font-size: 1.2rem; }
-.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
 .metric-col { background: var(--surface); border-radius: 8px; padding: 0.75rem; }
 .metric-title { color: var(--yellow); background: #2c3e50; margin: -0.75rem -0.75rem 0.5rem; padding: 0.5rem; border-radius: 8px 8px 0 0; font-size: 0.9rem; text-align: center; color: #f1c40f; }
-.tier-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; margin-bottom: 0.35rem; font-size: 0.8rem; }
-.tier-input { width: 55px; padding: 0.25rem; font-size: 0.8rem; }
-.tier-label { font-size: 0.75rem; color: var(--muted); }
+.tier-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-bottom: 0.4rem; font-size: 0.85rem; }
+.tier-input {
+  box-sizing: border-box;
+  min-width: 4.5rem;
+  width: 4.5rem;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.85rem;
+  text-align: right;
+}
+/* "To" targets can be large (e.g. 20000) — give them extra room */
+.tier-input[name$="_target"] {
+  min-width: 6rem;
+  width: 6rem;
+}
+.tier-input::-webkit-outer-spin-button,
+.tier-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.tier-input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.tier-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
 .settings-bottom { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
 .settings-bottom .btn { flex: 1; min-width: 200px; }
 
