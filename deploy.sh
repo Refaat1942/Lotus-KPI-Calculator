@@ -123,10 +123,37 @@ fi
 chown "root:${APP_USER}" .env 2>/dev/null || chown root:root .env
 chmod 640 .env
 
+# Pick a free local port for Docker PostgreSQL (5432 is often taken by a system install).
+_port_in_use() {
+    ss -tln 2>/dev/null | grep -q ":${1} " || netstat -tln 2>/dev/null | grep -q ":${1} "
+}
+_pick_db_port() {
+    local p
+    for p in 5432 5433 5434; do
+        if ! _port_in_use "$p"; then
+            echo "$p"
+            return
+        fi
+    done
+    die "Ports 5432–5434 are all in use. Stop the service using them and retry."
+}
+DB_PORT="$(_pick_db_port)"
+if grep -q "^DB_PORT=" .env; then
+    current="$(grep "^DB_PORT=" .env | head -1 | cut -d= -f2-)"
+    if _port_in_use "$current"; then
+        warn "Port ${current} is already in use — switching DB_PORT to ${DB_PORT}"
+        sed -i "s|^DB_PORT=.*|DB_PORT=${DB_PORT}|" .env
+    fi
+else
+    echo "DB_PORT=${DB_PORT}" >> .env
+fi
+
 # ---------------------------------------------------------------------------
 # 3. Start PostgreSQL (Docker)
 # ---------------------------------------------------------------------------
-log "Starting PostgreSQL container"
+log "Starting PostgreSQL container (host port: $(grep '^DB_PORT=' .env | cut -d= -f2))"
+# Remove a leftover failed container from a previous attempt.
+docker rm -f kpi-postgres 2>/dev/null || true
 $DC --env-file .env up -d
 
 log "Waiting for PostgreSQL to become healthy..."

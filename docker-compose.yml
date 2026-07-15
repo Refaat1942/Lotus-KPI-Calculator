@@ -8,8 +8,9 @@ services:
       POSTGRES_USER: ${DB_USER:-kpi}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
     # Bind to localhost only — the DB must not be reachable from the public network.
+    # Host port comes from DB_PORT in .env (deploy.sh picks 5432 or 5433 automatically).
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - kpi_pgdata:/var/lib/postgresql/data
     healthcheck:
