@@ -26,11 +26,11 @@
           {% for tier in met.tiers %}
           <div class="tier-row">
             <span class="tier-label">From</span>
-            <input type="number" step="any" name="{{ met.form_key }}_from" value="{{ tier.from }}" class="tier-input">
+            <input type="number" step="any" name="{{ met.form_key }}_from" value="{{ tier.from | fmt_num }}" class="tier-input">
             <span class="tier-label">To</span>
-            <input type="number" step="any" name="{{ met.form_key }}_target" value="{{ tier.target }}" class="tier-input" required>
+            <input type="number" step="any" name="{{ met.form_key }}_target" value="{{ tier.target | fmt_num }}" class="tier-input" required>
             <span class="tier-label">Pts</span>
-            <input type="number" step="any" name="{{ met.form_key }}_points" value="{{ tier.points }}" class="tier-input" required>
+            <input type="number" step="any" name="{{ met.form_key }}_points" value="{{ tier.points | fmt_num }}" class="tier-input" required>
           </div>
           {% endfor %}
         </div>

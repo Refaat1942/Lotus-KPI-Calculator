@@ -10,7 +10,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from config import Config
-from kpi_engine import KPIEngine, RESULT_COLUMNS, COMPARE_COLUMNS, SETTINGS_CATEGORIES
+from kpi_engine import KPIEngine, RESULT_COLUMNS, COMPARE_COLUMNS, SETTINGS_CATEGORIES, fmt_num
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -30,6 +30,11 @@ def parse_iso_date_from_form(form, prefix):
 def is_arabic_filter(text):
     from kpi_engine import _is_arabic_text
     return _is_arabic_text(text)
+
+
+@app.template_filter("fmt_num")
+def fmt_num_filter(val):
+    return fmt_num(val)
 
 _engines = {}
 

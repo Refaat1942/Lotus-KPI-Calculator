@@ -108,6 +108,46 @@ def find_col(df, possible_names):
     return None
 
 
+def normalize_num(val):
+    """Store whole numbers as int (no 16.0 in JSON or forms)."""
+    f = float(val)
+    return int(f) if f == int(f) else f
+
+
+def fmt_num(val):
+    """Format a number for display in inputs — no trailing .0."""
+    if val is None or val == "":
+        return ""
+    try:
+        f = float(val)
+        if f == int(f):
+            return str(int(f))
+        return f"{f}".rstrip("0").rstrip(".")
+    except (TypeError, ValueError):
+        return str(val)
+
+
+def _normalize_tier(tier):
+    out = {
+        "target": normalize_num(tier["target"]),
+        "points": int(tier["points"]),
+    }
+    if "from" in tier:
+        out["from"] = normalize_num(tier["from"])
+    return out
+
+
+def _normalize_logic(logic):
+    normalized = copy.deepcopy(logic)
+    for cat_k, metrics in normalized.items():
+        if not isinstance(metrics, dict):
+            continue
+        for met_k, tiers in metrics.items():
+            if isinstance(tiers, list):
+                metrics[met_k] = [_normalize_tier(t) for t in tiers if isinstance(t, dict)]
+    return normalized
+
+
 class KPIEngine:
     def __init__(self, dsn, logic_file, data_cache, upload_folder):
         self.dsn = dsn
@@ -178,6 +218,7 @@ class KPIEngine:
         return loaded
 
     def save_logic(self, new_logic):
+        new_logic = _normalize_logic(new_logic)
         with open(self.logic_file, 'w', encoding='utf-8') as f:
             json.dump(new_logic, f, indent=4)
         self.kpi_logic = new_logic
@@ -244,13 +285,27 @@ class KPIEngine:
     def get_points_from_tiers(self, value, tiers):
         if value < 0:
             return 0
-        valid_tiers = [t for t in sorted(tiers, key=lambda x: x['target'])]
-        if not valid_tiers:
+        if not tiers:
             return 0
+
+        # When tiers define explicit From/To ranges, match value inside [from, target].
+        if any("from" in t for t in tiers):
+            for t in sorted(tiers, key=lambda x: (float(x.get("from", 0)), float(x["target"]))):
+                t_from = float(t.get("from", 0))
+                t_to = float(t["target"])
+                if t_from <= value <= t_to:
+                    return t["points"]
+            sorted_tiers = sorted(tiers, key=lambda x: float(x["target"]))
+            if sorted_tiers and value > float(sorted_tiers[-1]["target"]):
+                return sorted_tiers[-1]["points"]
+            return 0
+
+        # Legacy tiers (target only): cumulative ceiling — value <= target.
+        valid_tiers = sorted(tiers, key=lambda x: x["target"])
         for t in valid_tiers:
-            if value <= t['target']:
-                return t['points']
-        return valid_tiers[-1]['points']
+            if value <= t["target"]:
+                return t["points"]
+        return valid_tiers[-1]["points"]
 
     def calc_cat_detailed(self, data, cat_key, col_rec, col_price, col_qty, days):
         if data.empty:
@@ -688,17 +743,28 @@ class KPIEngine:
                 targets = form_data.getlist(f"{key}_target")
                 points = form_data.getlist(f"{key}_points")
                 tiers = []
+                prev_start = 0
                 for f_val, t_val, p_val in zip(froms, targets, points):
                     if t_val.strip() == "" and p_val.strip() == "":
                         continue
-                    tier = {"target": float(t_val), "points": int(float(p_val))}
                     if f_val.strip() != "":
-                        tier["from"] = float(f_val)
+                        tier_from = float(f_val)
+                    else:
+                        tier_from = prev_start
+                    tier = {
+                        "from": normalize_num(tier_from),
+                        "target": normalize_num(t_val),
+                        "points": int(float(p_val)),
+                    }
                     tiers.append(tier)
+                    try:
+                        prev_start = int(float(t_val)) + 1
+                    except Exception:
+                        prev_start = tier_from
                 if tiers:
                     tiers.sort(key=lambda x: (x.get("from", 0), x["target"]))
                     new_logic[cat_k][met_k] = tiers
-        return new_logic
+        return _normalize_logic(new_logic)
 
     def process_comparison(self, date_from, date_to):
         if not self.all_results:
